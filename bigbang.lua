@@ -60,6 +60,11 @@ function init()
   end)
 end
 
+-- search for these spaces
+-- 2322 4321 2232 0453
+-- 0342 6234 0453 1432
+-- 4223 3321 7223 6322
+-- 5342 0232 7324 7232
 function redraw()
   screen.clear()
   screen.move(64,32)
