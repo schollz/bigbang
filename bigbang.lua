@@ -16,11 +16,12 @@ function scramble(tbl)
 end
 
 function init()
+  ticks=0
   key=0
   intervals={}
   spaces={}
   scale={}
-  timeScale=2
+  timeScale=8
   for i=0,6 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
@@ -63,13 +64,13 @@ function init()
       table.insert(spaces,1,math.random(0,7))
 
       if j%16<4 then
-        options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
+        options={{4,2,2,3},{3,3,2,1},{7,2,2,3},{6,3,2,2}}
       elseif j%16<8 then
         options={{0,3,4,2},{6,2,3,4},{0,4,5,3},{1,4,3,2}}
       elseif j%16<12 then
-        options={{4,2,2,3},{3,3,2,1},{7,2,2,3},{6,3,2,2}}
-      elseif j%16<16 then
         options={{5,3,4,2},{0,2,3,2},{7,3,2,4},{7,2,3,2}}
+      elseif j%16<16 then
+        options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
       end
       spaces=options[j%4+1]
       for i,v in ipairs(spaces) do 
@@ -88,9 +89,14 @@ function init()
       for _, v in ipairs(spaces) do 
         print(musicutil.note_num_to_name(scale[v+1]))
       end
-      clock.sleep(sleeptime)
+      tick_count=util.round(sleeptime/0.1)
+      ticks=tick_count
+      for ii=1,ticks do 
+        ticks = ticks - 1
+        clock.sleep(0.1)
+        redraw()
+      end
       engine.bboff()
-
     end
   end)
 end
@@ -102,7 +108,18 @@ end
 -- 5342 0232 7324 7232
 function redraw()
   screen.clear()
-  screen.move(64,32)
+  screen.font_size(8)
+  screen.move(64,14)
   screen.text_center(string.format("%d-%d-%d-%d",intervals[1],intervals[2],intervals[3],intervals[4]))
+  screen.font_size(16)
+  screen.move(64,30)
+  screen.text_center(string.format("%s-%s-%s-%s",
+  musicutil.note_num_to_name(scale[spaces[1]+1]),
+  musicutil.note_num_to_name(scale[spaces[2]+1]),
+  musicutil.note_num_to_name(scale[spaces[3]+1]),
+  musicutil.note_num_to_name(scale[spaces[4]+1])))
+  screen.move(64,50)
+  screen.font_size(16)
+  screen.text_center(string.format("%2.1f",ticks/10))
   screen.update()
 end
