@@ -1,5 +1,6 @@
 -- bigbang
 
+musicutil=require("musicutil")
 engine.name="BigBang"
 seeds={1,1,1,1}
 function choose(t)
@@ -15,9 +16,12 @@ function scramble(tbl)
 end
 
 function init()
+  key=0
+  intervals={}
+  spaces={}
   scale={}
-  timeScale=4
-  for i=0,3 do
+  timeScale=2
+  for i=0,6 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
     end
@@ -49,32 +53,44 @@ function init()
       -- determine random
       math.randomseed(seeds[j%#seeds+1])
       local sleeptime=6*(1.5+(0.25*math.random(0,7)))*timeScale/8
-      local spaces=scramble(choose({
+      spaces=scramble(choose({
         {4,3,2},
         {3,2,1},
         {2,2,3},
         {3,4,5},
       }))
-      print("spaces")
-      tab.print(spaces)
       -- root note
-      table.insert(spaces,1,math.random(1,8))
-      print("spaces")
+      table.insert(spaces,1,math.random(0,7))
+
+      if j%16<4 then
+        options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
+      elseif j%16<8 then
+        options={{0,3,4,2},{6,2,3,4},{0,4,5,3},{1,4,3,2}}
+      elseif j%16<12 then
+        options={{4,2,2,3},{3,3,2,1},{7,2,2,3},{6,3,2,2}}
+      elseif j%16<16 then
+        options={{5,3,4,2},{0,2,3,2},{7,3,2,4},{7,2,3,2}}
+      end
+      spaces=options[j%4+1]
+      for i,v in ipairs(spaces) do 
+        intervals[i]=v
+      end
       tab.print(spaces)
       for i,v in ipairs(spaces) do
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
+          engine.bbsine(timeScale,scale[spaces[i]+1]+48+key)
         else
           -- play root note
-          engine.bbjp2(timeScale,scale[spaces[i]]%12+24)
+          engine.bbjp2(timeScale,scale[spaces[i]+1]%12+24+key)
         end
-        -- play other notes
-        local note=scale[spaces[i]]+48
-        print("note",note)
-        engine.bbsine(timeScale,note)
+      end
+      for _, v in ipairs(spaces) do 
+        print(musicutil.note_num_to_name(scale[v+1]))
       end
       clock.sleep(sleeptime)
       engine.bboff()
+
     end
   end)
 end
@@ -87,7 +103,6 @@ end
 function redraw()
   screen.clear()
   screen.move(64,32)
-  -- screen.text_center("hello, world")
-  screen.text_center(string.format("%d-%d-%d-%d",seeds[1],seeds[2],seeds[3],seeds[4]))
+  screen.text_center(string.format("%d-%d-%d-%d",intervals[1],intervals[2],intervals[3],intervals[4]))
   screen.update()
 end
