@@ -17,11 +17,11 @@ end
 
 function init()
   ticks=0
-  key=0
+  key=10
   intervals={}
   spaces={}
   scale={}
-  timeScale=8
+  timeScale=24
   for i=0,6 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
@@ -39,6 +39,7 @@ function init()
 
   print("scramble")
   tab.print(choose(scramble({{4,5},{1,2,3}})))
+  params:set("clock_tempo",100)
 
   clock.run(function()
     local j=-1
@@ -53,7 +54,7 @@ function init()
       end
       -- determine random
       math.randomseed(seeds[j%#seeds+1])
-      local sleeptime=6*(1.5+(0.25*math.random(0,7)))*timeScale/8
+      local sleeptime=clock.get_beat_sec()*timeScale
       spaces=scramble(choose({
         {4,3,2},
         {3,2,1},
@@ -77,26 +78,31 @@ function init()
         intervals[i]=v
       end
       tab.print(spaces)
+      local root_note=0
       for i,v in ipairs(spaces) do
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
-          engine.bbsine(timeScale,scale[spaces[i]+1]+48+key)
+          engine.bbsine(sleeptime,scale[spaces[i]+1]+48+key)
         else
           -- play root note
-          engine.bbjp2(timeScale,scale[spaces[i]+1]%12+24+key)
+          root_note=scale[spaces[i]+1]%12+24+key
+          engine.bbjp2(sleeptime,root_note)
         end
       end
       for _,v in ipairs(spaces) do
         print(musicutil.note_num_to_name(scale[v+1]))
       end
-      tick_count=util.round(sleeptime/0.1)
-      ticks=tick_count
-      for ii=1,ticks do
-        ticks=ticks-1
-        clock.sleep(0.1)
-        redraw()
-      end
-      engine.timpani(16,42,math.random(),math.random(1,8))
+      redraw()
+      local timpani_time=math.random(1,12)*clock.get_beat_sec()
+      clock.sleep(sleeptime-timpani_time)
+      -- tick_count=util.round(sleeptime/0.1)
+      -- ticks=tick_count
+      -- for ii=1,ticks do
+      --   ticks=ticks-1
+      --   clock.sleep(0.1)
+      -- end
+      engine.timpani(math.random(6,12),root_note,math.random(50,100)/100,timpani_time+0.6)
+      clock.sleep(timpani_time)
       engine.bboff()
     end
   end)

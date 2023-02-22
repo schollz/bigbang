@@ -32,11 +32,11 @@ Engine_BigBang : CroneEngine {
 		});
 
 		SynthDef("ssample",{
-			arg db,amp,buf,rate,out,duration=100;
+			arg db,amp,buf,rate,out,duration=100,attack=0.005;
 
 			var snd=PlayBuf.ar(2,buf,rate,doneAction:2);
-			var env=EnvGen.ar(Env.new([0,1,1,0],[0.005,duration,0.1]),doneAction:2);
-			Out.ar(out,0.5*snd*amp*env*(db.dbamp));
+			var env=EnvGen.ar(Env.new([0,1,1,0],[attack,duration-attack,0.1]),gate:1,doneAction:2);
+			// Out.ar(out,0.5*snd*amp*env*(db.dbamp));
 			Out.ar(0,0.5*snd*amp*env*(db.dbamp));
 		}).send(s);
 
@@ -79,18 +79,18 @@ Engine_BigBang : CroneEngine {
 			sig = HPF.ar(sig ! 2, freq);
 			sig = BLowPass.ar(sig,freq*LFNoise2.kr(1).range(4,20),1/0.707);
 			sig = Pan2.ar(sig);
-			sig=sig*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
-			Out.ar(out,sig*EnvGen.ar(Env.perc(Rand(0.1,2),Rand(1,3),1,[4,-4]),timeScale:timeScale,doneAction:2)*amp);
+			sig=sig*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(5,10)),gate:gate*EnvGen.kr(Env.new([1,1,0],[timeScale,0.01])),doneAction:2);
+			Out.ar(out,sig*amp/2);
 		}).send(s);
 
 		SynthDef("sine",{
 			arg out,note,gate=1,timeScale=8;
 			var snd=Pulse.ar([note-Rand(0,0.05),note+Rand(0,0.05)].midicps,SinOsc.kr(Rand(1,3),Rand(0,pi)).range(0.3,0.7));
-			var env=EnvGen.ar(Env.perc(Rand(0.5,1.5),Rand(2,4),1,[4,-4]),timeScale:timeScale,doneAction:2);
+			var env=EnvGen.ar(Env.perc(Rand(0.5,1.5),timeScale,1,[4,-4]),doneAction:2);
 			snd=snd+PinkNoise.ar(SinOsc.kr(1/Rand(1,4),Rand(0,pi)).range(0.0,1.5));
 			snd=snd*env/5;
 			snd=RLPF.ar(snd,note.midicps*6,0.8);
-			snd=snd*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
+			snd=snd*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
 			snd=Balance2.ar(snd[0],snd[1],Rand(-1,1));
 			Out.ar(out,snd);
 		}).send(s);
@@ -142,13 +142,13 @@ Engine_BigBang : CroneEngine {
 				if (rollTime>0,{
 					rollDynamics.do({ arg v,i;
 						[i,v].postln;
-						Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("roll"++i),\duration,rollTime,\out,busmain]);
+						Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("roll"++i),\duration,rollTime,\attack,rollTime/2,\out,busmain]);
 					});
 				});
 				rollTime.wait;
 				dynamics.do({ arg v,i;
 					[i,v].postln;
-					Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("hits"++i),\out,busmain]);
+					Synth.new("ssample",[\db,db,\amp,v,\rate,rate/2,\buf,bufs.at("hits"++i),\out,busmain]);
 				});
 			}.play;
 		});
