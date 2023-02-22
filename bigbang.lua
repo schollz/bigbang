@@ -31,7 +31,7 @@ function init()
   tab.print(scale)
 
   clock.run(function()
-    while true do 
+    while true do
       redraw()
       clock.sleep(1)
     end
@@ -39,7 +39,7 @@ function init()
 
   print("scramble")
   tab.print(choose(scramble({{4,5},{1,2,3}})))
-  
+
   clock.run(function()
     local j=-1
     while true do
@@ -73,7 +73,7 @@ function init()
         options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
       end
       spaces=options[j%4+1]
-      for i,v in ipairs(spaces) do 
+      for i,v in ipairs(spaces) do
         intervals[i]=v
       end
       tab.print(spaces)
@@ -86,16 +86,17 @@ function init()
           engine.bbjp2(timeScale,scale[spaces[i]+1]%12+24+key)
         end
       end
-      for _, v in ipairs(spaces) do 
+      for _,v in ipairs(spaces) do
         print(musicutil.note_num_to_name(scale[v+1]))
       end
       tick_count=util.round(sleeptime/0.1)
       ticks=tick_count
-      for ii=1,ticks do 
-        ticks = ticks - 1
+      for ii=1,ticks do
+        ticks=ticks-1
         clock.sleep(0.1)
         redraw()
       end
+      engine.timpani(16,42,math.random(),math.random(1,8))
       engine.bboff()
     end
   end)
@@ -114,9 +115,9 @@ function redraw()
   screen.font_size(16)
   screen.move(64,30)
   screen.text_center(string.format("%s-%s-%s-%s",
-  musicutil.note_num_to_name(scale[spaces[1]+1]),
-  musicutil.note_num_to_name(scale[spaces[2]+1]),
-  musicutil.note_num_to_name(scale[spaces[3]+1]),
+    musicutil.note_num_to_name(scale[spaces[1]+1]),
+    musicutil.note_num_to_name(scale[spaces[2]+1]),
+    musicutil.note_num_to_name(scale[spaces[3]+1]),
   musicutil.note_num_to_name(scale[spaces[4]+1])))
   screen.move(64,50)
   screen.font_size(16)

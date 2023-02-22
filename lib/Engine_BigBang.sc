@@ -24,7 +24,7 @@ Engine_BigBang : CroneEngine {
 		bufs=Dictionary.new();
 
 		3.do({ arg i;
-			bufs.put("hit"++i,Buffer.read(s,"/home/we/dust/code/bigbang/samples/hits/"++i++".wav"));
+			bufs.put("hits"++i,Buffer.read(s,"/home/we/dust/code/bigbang/samples/hits/"++i++".wav"));
 		});
 
 		2.do({ arg i;
@@ -36,7 +36,8 @@ Engine_BigBang : CroneEngine {
 
 			var snd=PlayBuf.ar(2,buf,rate,doneAction:2);
 			var env=EnvGen.ar(Env.new([0,1,1,0],[0.005,duration,0.1]),doneAction:2);
-			Out.ar(out,snd*amp*env*(db.dbamp));
+			Out.ar(out,0.5*snd*amp*env*(db.dbamp));
+			Out.ar(0,0.5*snd*amp*env*(db.dbamp));
 		}).send(s);
 
 		SynthDef("jp2",{ | out,amp=0.75,note=40, mix=1.0, detune = 0.4,lpf=10,gate=1,timeScale=8 |
@@ -141,13 +142,13 @@ Engine_BigBang : CroneEngine {
 				if (rollTime>0,{
 					rollDynamics.do({ arg v,i;
 						[i,v].postln;
-						Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("roll"++i),\duration,rollTime]);
+						Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("roll"++i),\duration,rollTime,\out,busmain]);
 					});
 				});
 				rollTime.wait;
 				dynamics.do({ arg v,i;
 					[i,v].postln;
-					Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("hits"++i)]);
+					Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("hits"++i),\out,busmain]);
 				});
 			}.play;
 		});
