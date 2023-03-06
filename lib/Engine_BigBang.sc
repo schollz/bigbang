@@ -42,6 +42,7 @@ Engine_BigBang : CroneEngine {
 
 		SynthDef("jp2",{ | out,amp=0.75,note=40, mix=1.0, detune = 0.4,lpf=10,gate=1,timeScale=8 |
 			var freq=note.midicps;
+			var env=EnvGen.ar(Env.perc(Rand(0.1,1)*timeScale/4,Rand(0.5,2)*timeScale,1,[4,-4]),doneAction:2);
 			var detuneCurve = { |x|
 				(10028.7312891634*x.pow(11)) -
 				(50818.8652045924*x.pow(10)) +
@@ -79,18 +80,18 @@ Engine_BigBang : CroneEngine {
 			sig = HPF.ar(sig ! 2, freq);
 			sig = BLowPass.ar(sig,freq*LFNoise2.kr(1).range(4,20),1/0.707);
 			sig = Pan2.ar(sig);
-			sig=sig*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(5,10)),gate:gate*EnvGen.kr(Env.new([1,1,0],[timeScale,0.01])),doneAction:2);
+			sig=sig*env*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(1,10)),gate:gate*EnvGen.kr(Env.new([1,1,0],[timeScale,0.01])),doneAction:2);
 			Out.ar(out,sig*amp/2);
 		}).send(s);
 
 		SynthDef("sine",{
 			arg out,note,gate=1,timeScale=8;
 			var snd=Pulse.ar([note-Rand(0,0.05),note+Rand(0,0.05)].midicps,SinOsc.kr(Rand(1,3),Rand(0,pi)).range(0.3,0.7));
-			var env=EnvGen.ar(Env.perc(Rand(0.5,1.5),timeScale,1,[4,-4]),doneAction:2);
+			var env=EnvGen.ar(Env.perc(Rand(0.1,1)*timeScale/4,Rand(0.5,2)*timeScale,1,[4,-4]),doneAction:2);
 			snd=snd+PinkNoise.ar(SinOsc.kr(1/Rand(1,4),Rand(0,pi)).range(0.0,1.5));
 			snd=snd*env/5;
 			snd=RLPF.ar(snd,note.midicps*6,0.8);
-			snd=snd*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
+			snd=snd*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(1,10)),gate:gate,doneAction:2);
 			snd=Balance2.ar(snd[0],snd[1],Rand(-1,1));
 			Out.ar(out,snd);
 		}).send(s);
@@ -114,7 +115,7 @@ Engine_BigBang : CroneEngine {
 			snd2=BPeakEQ.ar(snd2,24.midicps,1,3);
 			snd2=BPeakEQ.ar(snd2,660,1,-3);
 			snd2=snd2+SoundIn.ar([0,1]);
-			snd2=SelectX.ar(0.3,[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:VarLag.kr(LFNoise0.kr(1/3),3).range(80,96))]);
+			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0.3,0.7),[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:LFNoise2.kr(1/4).range(70,96))]);
 			snd2=snd2*EnvGen.ar(Env.new([48.neg,0],[3])).dbamp;
 			Out.ar(0,snd2*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:3),gate:gate,doneAction:2));
 		}).send(s);
