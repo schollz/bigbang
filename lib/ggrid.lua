@@ -131,10 +131,10 @@ function GGrid:get_visual()
             if self.notes[row][col]~=nil then 
                 local vv=self.notes[row][col]%12
                 if vv==0 then 
-                    self.visual[row][col]=5
+                    self.visual[row][col]=1
                 end
                 if vv==v then 
-                    self.visual[row][col]=3
+                    self.visual[row][col]=4
                 end
             end
         end      
