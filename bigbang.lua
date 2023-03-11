@@ -1,8 +1,10 @@
 -- bigbang
 
+ggrid_=include("lib/ggrid")
 musicutil=require("musicutil")
 engine.name="BigBang"
 seeds={1,1,1,1}
+playing_notes = {}
 function choose(t)
   return t[math.random(1,#t)]
 end
@@ -22,13 +24,14 @@ function init()
   spaces={}
   scale={}
   timeScale=8
-  for i=0,6 do
+  for i=0,10 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
     end
   end
   print("scale")
   tab.print(scale)
+  g_ = ggrid_:new{scale=scale}
 
   clock.run(function()
     while true do 
@@ -76,19 +79,20 @@ function init()
       for i,v in ipairs(spaces) do 
         intervals[i]=v
       end
-      tab.print(spaces)
       for i,v in ipairs(spaces) do
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
+          table.insert(playing_notes,scale[spaces[i]+1]%12)
           engine.bbsine(timeScale,scale[spaces[i]+1]+48+key)
         else
           -- play root note
+          playing_notes = {scale[spaces[i]+1]%12}
           engine.bbjp2(timeScale,scale[spaces[i]+1]%12+24+key)
         end
       end
-      for _, v in ipairs(spaces) do 
-        print(musicutil.note_num_to_name(scale[v+1]))
-      end
+      -- for _, v in ipairs(spaces) do 
+      --   print(musicutil.note_num_to_name(scale[v+1]))
+      -- end
       tick_count=util.round(sleeptime/0.1)
       ticks=tick_count
       for ii=1,ticks do 
