@@ -94,7 +94,7 @@ Engine_BigBang : CroneEngine {
 			snd2=HPF.ar(snd2,50);
 			snd2=BPeakEQ.ar(snd2,24.midicps,1,3);
 			snd2=BPeakEQ.ar(snd2,660,1,-3);
-			// snd2=SelectX.ar(LFNoise2.kr(1/4).range(0.3,0.7),[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:VarLag.kr(LFNoise0.kr(1/3),3).range(60,96))]);
+			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0.3,0.7),[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:VarLag.kr(LFNoise0.kr(1/3),3).range(60,96))]);
 			snd2=snd2*EnvGen.ar(Env.new([48.neg,0],[3])).dbamp;
 			Out.ar(0,snd2*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:3),gate:gate,doneAction:2));
 		}).send(s);
