@@ -17,13 +17,32 @@ function scramble(tbl)
   return tbl
 end
 
+reverb_settings_saved={}
+reverb_settings={
+  reverb=2,
+  rev_eng_input=0,
+  rev_return_level=0,
+  rev_low_time=9,
+  rev_mid_time=6,
+}
 function init()
+  math.randomseed( os.time() )
+  for k,v in pairs(reverb_settings) do
+    reverb_settings_saved[k]=params:get(k)
+    params:set(k,v)
+  end
+  params:set("reverb",2)
+  params:set("rev_eng_input",-3)
+  params:set("rev_return_level",0)
+  params:set("rev_low_time",9)
+  params:set("rev_mid_time",6)
+
   ticks=0
   key=10
   intervals={}
   spaces={}
   scale={}
-  timeScale=8
+  timeScale=12
   for i=0,10 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
@@ -61,7 +80,7 @@ function init()
       -- if math.random(1,100)<20 then 
       --   timeScale_ = timeScale_ * math.random(100,150)/2
       -- end
-      local sleeptime=6*(1.5+(0.25*math.random(0,7)))*timeScale_/8
+      local sleeptime=timeScale_*math.random(105,115)/100
       spaces=scramble(choose({
         {4,3,2},
         {3,2,1},
@@ -71,29 +90,24 @@ function init()
       -- root note
       table.insert(spaces,1,math.random(0,7))
 
-      if j%16<4 then
-        options={{4,2,2,3},{3,3,2,1},{7,2,2,3},{6,3,2,2}}
-      elseif j%16<8 then
-        options={{0,3,4,2},{6,2,3,4},{0,4,5,3},{1,4,3,2}}
-      elseif j%16<12 then
-        options={{5,3,4,2},{0,2,3,2},{7,3,2,4},{7,2,3,2}}
-      elseif j%16<16 then
-        options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
+      if (math.random(1,100)<99) then 
+        if j%16<4 then
+          options={{4,2,2,3},{3,3,2,1},{7,2,2,3},{6,3,2,2}}
+        elseif j%16<8 then
+          options={{0,3,4,2},{6,2,3,4},{0,4,5,3},{1,4,3,2}}
+        elseif j%16<12 then
+          options={{5,3,4,2},{0,2,3,2},{7,3,2,4},{7,2,3,2}}
+        elseif j%16<16 then
+          options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
+        end
+        options={
+          {2,2,3,2},{7,3,2,4}, {4,2,2,3},{7,2,2,3},-- C F G C 
+          {7,2,3,2},{6,3,2,2}, {7,2,2,3},{6,2,3,4},-- Am Em C G
+          {6,3,2,2},{2,3,2,2}, {1,4,3,2},{6,2,3,4},-- Em Am Dm G
+        }
+        spaces=options[j%#options+1]
       end
-     
-      options={
-        {2,2,3,2},{7,3,2,4}, {4,2,2,3},{7,2,2,3},-- C F G C 
-        {7,2,3,2},{6,3,2,2}, {7,2,2,3},{6,2,3,4},-- Am Em C G
-        {6,3,2,2},{2,3,2,2}, {1,4,3,2},{6,2,3,4},-- Em Am Dm G
-    }
-      spaces=options[j%#options+1]
-      -- spaces={0,4,5,3}
-      -- F  {7,3,2,4}
-      -- Dm {1,4,3,2}
-      -- Em {6,3,2,2}
-      -- C  {7,2,2,3} {2,2,3,2}
-      -- G  {4,2,2,3} {6,2,3,4}
-      -- Am {2,3,2,2} {0,2,3,2} {7,2,3,2}
+
       for i,v in ipairs(spaces) do 
         intervals[i]=v
       end
@@ -101,10 +115,15 @@ function init()
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
           table.insert(playing_notes,scale[spaces[i]+1]%12)
-          engine.bbsine(timeScale_,scale[spaces[i]+1]+48+key)
+          engine.bbsine(timeScale_,scale[spaces[i]+1]+36+key)
         else
           -- play root note
           playing_notes = {scale[spaces[i]+1]%12}
+          -- engine.bbjp2(timeScale_,scale[spaces[i]+1]%12+24+key)
+          local bnote = scale[spaces[i]+1]%12+24+key
+          if bnote > 44 then
+            bnote = bnote - 12
+          end
           engine.bbjp2(timeScale_,scale[spaces[i]+1]%12+24+key)
         end
       end
@@ -124,19 +143,14 @@ function init()
   end)
 end
 
--- search for these spaces
--- 2322 4321 2232 0453
--- 0342 6234 0453 1432
--- 4223 3321 7223 6322
--- 5342 0232 7324 7232
 function redraw()
   screen.clear()
-  screen.font_size(8)
-  screen.move(64,14)
-  screen.text_center(string.format("%d-%d-%d-%d",intervals[1],intervals[2],intervals[3],intervals[4]))
+  -- screen.font_size(8)
+  -- screen.move(64,14)
+  -- screen.text_center(string.format("%d-%d-%d-%d",intervals[1],intervals[2],intervals[3],intervals[4]))
   screen.font_size(16)
   screen.move(64,30)
-  screen.text_center(string.format("%s-%s-%s-%s",
+  screen.text_center(string.format("%s %s %s %s",
     musicutil.note_num_to_name(scale[spaces[1]+1]),
     musicutil.note_num_to_name(scale[spaces[2]+1]),
     musicutil.note_num_to_name(scale[spaces[3]+1]),
