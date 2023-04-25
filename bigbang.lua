@@ -1,8 +1,10 @@
 -- bigbang
 
+ggrid_=include("lib/ggrid")
 musicutil=require("musicutil")
 engine.name="BigBang"
 seeds={1,1,1,1}
+playing_notes = {}
 function choose(t)
   return t[math.random(1,#t)]
 end
@@ -21,14 +23,15 @@ function init()
   intervals={}
   spaces={}
   scale={}
-  timeScale=24
-  for i=0,6 do
+  timeScale=8
+  for i=0,10 do
     for _,v in ipairs({0,2,4,5,7,9,11}) do
       table.insert(scale,v+12*i)
     end
   end
   print("scale")
   tab.print(scale)
+  g_ = ggrid_:new{scale=scale}
 
   clock.run(function()
     while true do
@@ -54,7 +57,11 @@ function init()
       end
       -- determine random
       math.randomseed(seeds[j%#seeds+1])
-      local sleeptime=clock.get_beat_sec()*timeScale
+      local timeScale_=timeScale
+      -- if math.random(1,100)<20 then 
+      --   timeScale_ = timeScale_ * math.random(100,150)/2
+      -- end
+      local sleeptime=6*(1.5+(0.25*math.random(0,7)))*timeScale_/8
       spaces=scramble(choose({
         {4,3,2},
         {3,2,1},
@@ -73,36 +80,45 @@ function init()
       elseif j%16<16 then
         options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
       end
-      spaces=options[j%4+1]
-      for i,v in ipairs(spaces) do
+     
+      options={
+        {2,2,3,2},{7,3,2,4}, {4,2,2,3},{7,2,2,3},-- C F G C 
+        {7,2,3,2},{6,3,2,2}, {7,2,2,3},{6,2,3,4},-- Am Em C G
+        {6,3,2,2},{2,3,2,2}, {1,4,3,2},{6,2,3,4},-- Em Am Dm G
+    }
+      spaces=options[j%#options+1]
+      -- spaces={0,4,5,3}
+      -- F  {7,3,2,4}
+      -- Dm {1,4,3,2}
+      -- Em {6,3,2,2}
+      -- C  {7,2,2,3} {2,2,3,2}
+      -- G  {4,2,2,3} {6,2,3,4}
+      -- Am {2,3,2,2} {0,2,3,2} {7,2,3,2}
+      for i,v in ipairs(spaces) do 
         intervals[i]=v
       end
-      tab.print(spaces)
-      local root_note=0
       for i,v in ipairs(spaces) do
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
-          engine.bbsine(sleeptime,scale[spaces[i]+1]+48+key)
+          table.insert(playing_notes,scale[spaces[i]+1]%12)
+          engine.bbsine(timeScale_,scale[spaces[i]+1]+48+key)
         else
           -- play root note
-          root_note=scale[spaces[i]+1]%12+24+key
-          engine.bbjp2(sleeptime,root_note)
+          playing_notes = {scale[spaces[i]+1]%12}
+          engine.bbjp2(timeScale_,scale[spaces[i]+1]%12+24+key)
         end
       end
-      for _,v in ipairs(spaces) do
-        print(musicutil.note_num_to_name(scale[v+1]))
-      end
-      redraw()
-      local timpani_time=math.random(1,12)*clock.get_beat_sec()
-      clock.sleep(sleeptime-timpani_time)
-      -- tick_count=util.round(sleeptime/0.1)
-      -- ticks=tick_count
-      -- for ii=1,ticks do
-      --   ticks=ticks-1
-      --   clock.sleep(0.1)
+      -- for _, v in ipairs(spaces) do 
+      --   print(musicutil.note_num_to_name(scale[v+1]))
       -- end
-      engine.timpani(math.random(6,12),root_note,math.random(50,100)/100,timpani_time+0.6)
-      clock.sleep(timpani_time)
+      tick_count=util.round(sleeptime/0.1)
+      ticks=tick_count
+      for ii=1,ticks do 
+        ticks = ticks - 1
+        clock.sleep(0.1)
+        redraw()
+      end
+
       engine.bboff()
     end
   end)

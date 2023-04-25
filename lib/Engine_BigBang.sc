@@ -80,8 +80,8 @@ Engine_BigBang : CroneEngine {
 			sig = HPF.ar(sig ! 2, freq);
 			sig = BLowPass.ar(sig,freq*LFNoise2.kr(1).range(4,20),1/0.707);
 			sig = Pan2.ar(sig);
-			sig=sig*env*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(1,10)),gate:gate*EnvGen.kr(Env.new([1,1,0],[timeScale,0.01])),doneAction:2);
-			Out.ar(out,sig*amp/2);
+			sig=sig*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
+			Out.ar(out,sig*EnvGen.ar(Env.perc(Rand(0.1,2),Rand(1,3),1,[4,-4]),timeScale:timeScale,doneAction:2)*amp*0.9);
 		}).send(s);
 
 		SynthDef("sine",{
@@ -93,7 +93,7 @@ Engine_BigBang : CroneEngine {
 			snd=RLPF.ar(snd,note.midicps*6,0.8);
 			snd=snd*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(1,10)),gate:gate,doneAction:2);
 			snd=Balance2.ar(snd[0],snd[1],Rand(-1,1));
-			Out.ar(out,snd);
+			Out.ar(out,snd*1.1);
 		}).send(s);
 
 		SynthDef("out",{ arg gate=1, in;
@@ -106,16 +106,17 @@ Engine_BigBang : CroneEngine {
 			snd2 = snd2 + PitchShift.ar(snd, 0.1, 4,0,1,0.5*shimmer/2);
 			// snd2 = snd2 + PitchShift.ar(snd, 0.1, 8,0,1,0.125*shimmer/2);
 			snd2=SelectX.ar(0.8,[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:VarLag.kr(LFNoise0.kr(1/3),3).range(50,100))]);
+			snd2=snd2*0.5;
 			// snd2=AnalogTape.ar(snd2,0.9,0.9,0.7);
-			snd2=SelectX.ar(SinOsc.kr(1/11).range(0,0.3),[snd2,AnalogChew.ar(snd2,1.0,0.5,0.5)]);
-			snd2=AnalogDegrade.ar(snd2,0.2,0.2,0.5,0.5);
-			snd2=AnalogLoss.ar(snd2,0.5,0.5,0.5,0.5);
+			snd2=snd2+SoundIn.ar([0,1]);
+			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0,0.5),[snd2,AnalogChew.ar(snd2,1.0,0.5,0.5)]);
+			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0,0.5),[snd2,AnalogDegrade.ar(snd2,0.2,0.2,0.5,0.5)]);
+			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0,0.5),[snd2,AnalogLoss.ar(snd2,0.5,0.5,0.5,0.5)]);
 			snd2=snd2.tanh*0.75;
 			snd2=HPF.ar(snd2,50);
 			snd2=BPeakEQ.ar(snd2,24.midicps,1,3);
 			snd2=BPeakEQ.ar(snd2,660,1,-3);
-			snd2=snd2+SoundIn.ar([0,1]);
-			snd2=SelectX.ar(LFNoise2.kr(1/4).range(0.3,0.7),[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:LFNoise2.kr(1/4).range(70,96))]);
+			// snd2=SelectX.ar(LFNoise2.kr(1/4).range(0.3,0.7),[snd2,Fverb.ar(snd2[0],snd2[1],100,decay:VarLag.kr(LFNoise0.kr(1/3),3).range(60,96))]);
 			snd2=snd2*EnvGen.ar(Env.new([48.neg,0],[3])).dbamp;
 			Out.ar(0,snd2*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:3),gate:gate,doneAction:2));
 		}).send(s);
