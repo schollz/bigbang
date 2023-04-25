@@ -19,7 +19,7 @@ end
 
 function init()
   ticks=0
-  key=0
+  key=10
   intervals={}
   spaces={}
   scale={}
@@ -34,7 +34,7 @@ function init()
   g_ = ggrid_:new{scale=scale}
 
   clock.run(function()
-    while true do 
+    while true do
       redraw()
       clock.sleep(1)
     end
@@ -42,7 +42,8 @@ function init()
 
   print("scramble")
   tab.print(choose(scramble({{4,5},{1,2,3}})))
-  
+  params:set("clock_tempo",100)
+
   clock.run(function()
     local j=-1
     while true do
@@ -79,7 +80,7 @@ function init()
       elseif j%16<16 then
         options={{2,3,2,2},{4,3,2,1},{2,2,3,2},{0,4,5,3}}
       end
-      
+     
       options={
         {2,2,3,2},{7,3,2,4}, {4,2,2,3},{7,2,2,3},-- C F G C 
         {7,2,3,2},{6,3,2,2}, {7,2,2,3},{6,2,3,4},-- Am Em C G
@@ -117,6 +118,7 @@ function init()
         clock.sleep(0.1)
         redraw()
       end
+
       engine.bboff()
     end
   end)
@@ -135,9 +137,9 @@ function redraw()
   screen.font_size(16)
   screen.move(64,30)
   screen.text_center(string.format("%s-%s-%s-%s",
-  musicutil.note_num_to_name(scale[spaces[1]+1]),
-  musicutil.note_num_to_name(scale[spaces[2]+1]),
-  musicutil.note_num_to_name(scale[spaces[3]+1]),
+    musicutil.note_num_to_name(scale[spaces[1]+1]),
+    musicutil.note_num_to_name(scale[spaces[2]+1]),
+    musicutil.note_num_to_name(scale[spaces[3]+1]),
   musicutil.note_num_to_name(scale[spaces[4]+1])))
   screen.move(64,50)
   screen.font_size(16)

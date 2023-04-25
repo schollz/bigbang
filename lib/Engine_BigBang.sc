@@ -4,9 +4,11 @@
 Engine_BigBang : CroneEngine {
 
 	// BigBang specific v0.1.0
+	var bufs;
     var syns;
 	var synout;
 	var busmain;
+	var timpani;
 	// BigBang ^
 
 	*new { arg context, doneCallback;
@@ -19,9 +21,28 @@ Engine_BigBang : CroneEngine {
 		// BigBang specific v0.0.1
 
 		syns=Dictionary.new();
+		bufs=Dictionary.new();
+
+		3.do({ arg i;
+			bufs.put("hits"++i,Buffer.read(s,"/home/we/dust/code/bigbang/samples/hits/"++i++".wav"));
+		});
+
+		2.do({ arg i;
+			bufs.put("roll"++i,Buffer.read(s,"/home/we/dust/code/bigbang/samples/roll/"++i++".wav"));
+		});
+
+		SynthDef("ssample",{
+			arg db,amp,buf,rate,out,duration=100,attack=0.005;
+
+			var snd=PlayBuf.ar(2,buf,rate,doneAction:2);
+			var env=EnvGen.ar(Env.new([0,1,1,0],[attack,duration-attack,0.1]),gate:1,doneAction:2);
+			// Out.ar(out,0.5*snd*amp*env*(db.dbamp));
+			Out.ar(0,0.5*snd*amp*env*(db.dbamp));
+		}).send(s);
 
 		SynthDef("jp2",{ | out,amp=0.75,note=40, mix=1.0, detune = 0.4,lpf=10,gate=1,timeScale=8 |
 			var freq=note.midicps;
+			var env=EnvGen.ar(Env.perc(Rand(0.1,1)*timeScale/4,Rand(0.5,2)*timeScale,1,[4,-4]),doneAction:2);
 			var detuneCurve = { |x|
 				(10028.7312891634*x.pow(11)) -
 				(50818.8652045924*x.pow(10)) +
@@ -62,18 +83,19 @@ Engine_BigBang : CroneEngine {
 			sig=sig*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
 			Out.ar(out,sig*EnvGen.ar(Env.perc(Rand(0.1,2),Rand(1,3),1,[4,-4]),timeScale:timeScale,doneAction:2)*amp*0.9);
 		}).send(s);
+
 		SynthDef("sine",{
 			arg out,note,gate=1,timeScale=8;
 			var snd=Pulse.ar([note-Rand(0,0.05),note+Rand(0,0.05)].midicps,SinOsc.kr(Rand(1,3),Rand(0,pi)).range(0.3,0.7));
-			var env=EnvGen.ar(Env.perc(Rand(0.5,1.5),Rand(2,4),1,[4,-4]),timeScale:timeScale,doneAction:2);
+			var env=EnvGen.ar(Env.perc(Rand(0.1,1)*timeScale/4,Rand(0.5,2)*timeScale,1,[4,-4]),doneAction:2);
 			snd=snd+PinkNoise.ar(SinOsc.kr(1/Rand(1,4),Rand(0,pi)).range(0.0,1.5));
 			snd=snd*env/5;
 			snd=RLPF.ar(snd,note.midicps*6,0.8);
-			snd=snd*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
+			snd=snd*EnvGen.ar(Env.adsr(attackTime:1,sustainLevel:1,releaseTime:Rand(1,10)),gate:gate,doneAction:2);
 			snd=Balance2.ar(snd[0],snd[1],Rand(-1,1));
 			Out.ar(out,snd*1.1);
 		}).send(s);
-		s.sync;
+
 		SynthDef("out",{ arg gate=1, in;
 			var snd2;
 			var shimmer=1;
@@ -104,6 +126,35 @@ Engine_BigBang : CroneEngine {
 		s.sync;
 		synout=Synth.new("out",[\in,busmain],s,\addToTail);
 
+		this.addCommand("timpani","ffff", { arg msg;
+			var db=msg[1];
+			var note=msg[2];
+			var velocity=msg[3];
+			var rollTime=msg[4];
+			var eroot=[0.79370052598265, 0.84089641525195, 0.8908987181383, 0.9438743126793 ,1.0, 1.0594630943591, 1.1224620483089, 1.1892071150019, 1.2599210498937, 1.3348398541685, 1.4142135623711, 1.4983070768743, 1.5874010519653, 1.6817928305039, 1.7817974362766, 1.8877486253586];
+			var rate=eroot[note.mod(12)];
+			var dynamics=[1-velocity,0,velocity];
+			var rollDynamics=[1-velocity,velocity];
+			if (velocity<0.5,{
+				dynamics[1]=velocity*2;
+			},{
+				dynamics[1]=(1-velocity)*2;
+			});
+			Routine{
+				if (rollTime>0,{
+					rollDynamics.do({ arg v,i;
+						[i,v].postln;
+						Synth.new("ssample",[\db,db,\amp,v,\rate,rate,\buf,bufs.at("roll"++i),\duration,rollTime,\attack,rollTime/2,\out,busmain]);
+					});
+				});
+				rollTime.wait;
+				dynamics.do({ arg v,i;
+					[i,v].postln;
+					Synth.new("ssample",[\db,db,\amp,v,\rate,rate/2,\buf,bufs.at("hits"++i),\out,busmain]);
+				});
+			}.play;
+		});
+
         this.addCommand("bbjp2","ff", { arg msg;
 			var timeScale=msg[1];
 			var note=msg[2];
@@ -132,6 +183,9 @@ Engine_BigBang : CroneEngine {
 		// BigBang Specific v0.0.1
         syns.keysValuesDo({ arg buf, val;
             val.set(\gate,0);
+        });
+        bufs.keysValuesDo({ arg buf, val;
+            val.free;
         });
 		synout.set(\gate,0);
 		busmain.free;
