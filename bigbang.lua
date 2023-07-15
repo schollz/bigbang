@@ -18,6 +18,7 @@ function scramble(tbl)
 end
 
 function init()
+  params:set("compressor",1)
   ticks=0
   key=0
   intervals={}

@@ -60,7 +60,7 @@ Engine_BigBang : CroneEngine {
 			sig = BLowPass.ar(sig,freq*LFNoise2.kr(1).range(4,20),1/0.707);
 			sig = Pan2.ar(sig);
 			sig=sig*EnvGen.ar(Env.adsr(sustainLevel:1,releaseTime:Rand(5,10)),gate:gate,doneAction:2);
-			Out.ar(out,sig*EnvGen.ar(Env.perc(Rand(0.1,2),Rand(1,3),1,[4,-4]),timeScale:timeScale,doneAction:2)*amp*0.9);
+			Out.ar(out,sig*EnvGen.ar(Env.perc(Rand(0.1,2),Rand(1,3),1,[4,-4]),timeScale:timeScale,doneAction:2)*amp*0.8);
 		}).send(s);
 		SynthDef("sine",{
 			arg out,note,gate=1,timeScale=8;
