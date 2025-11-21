@@ -27,6 +27,10 @@ reverb_settings={
 }
 function init()
   math.randomseed( os.time() )
+
+  -- add song mode parameter
+  params:add_binary("song_mode", "song mode", "toggle", 0)
+
   for k,v in pairs(reverb_settings) do
     reverb_settings_saved[k]=params:get(k)
     params:set(k,v)
@@ -115,7 +119,9 @@ function init()
         if i>1 then
           spaces[i]=spaces[i]+spaces[i-1]
           table.insert(playing_notes,scale[spaces[i]+1]%12)
-          engine.bbsine(timeScale_,scale[spaces[i]+1]+36+key)
+          if params:get("song_mode") == 1 then
+            engine.bbsine(timeScale_,scale[spaces[i]+1]+36+key)
+          end
         else
           -- play root note
           playing_notes = {scale[spaces[i]+1]%12}
@@ -124,7 +130,9 @@ function init()
           if bnote > 44 then
             bnote = bnote - 12
           end
-          engine.bbjp2(timeScale_,scale[spaces[i]+1]%12+24+key)
+          if params:get("song_mode") == 1 then
+            engine.bbjp2(timeScale_,scale[spaces[i]+1]%12+24+key)
+          end
         end
       end
       -- for _, v in ipairs(spaces) do 

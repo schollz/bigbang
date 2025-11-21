@@ -94,10 +94,11 @@ function GGrid:key_press(row,col,on)
         last_note = {k,v}
     end
   end
-  if last_note[2]==0 then 
+  if last_note[2]==0 then
     print("release")
     crow.output[2](false)
-    do return end 
+    engine.bboff()
+    do return end
   end
   local row,col=last_note[1]:match("(%d+),(%d+)")
   row=tonumber(row)
@@ -106,8 +107,10 @@ function GGrid:key_press(row,col,on)
   local volts = (self.notes[row][col]+key-24)/12
   print(volts, num)
   crow.output[1].volts=volts
-  if num==1 then 
+  if num==1 then
       crow.output[2](true)
+      -- emit note to engine
+      engine.bbsine(12, self.notes[row][col]+key)
   end
 end
 
