@@ -187,6 +187,15 @@ Engine_BigBang : CroneEngine {
 			});
         });
 
+        this.addCommand("bboff_note","f", { arg msg;
+			var note=msg[1];
+			if (syns.at(note).notNil,{
+				if (syns.at(note).isRunning,{
+					syns.at(note).set(\gate,0);
+				});
+			});
+        });
+
 		// ^ BigBang specific
 	}
 

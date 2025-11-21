@@ -54,6 +54,9 @@ function GGrid:new(args)
   -- keep track of pressed buttons
   m.pressed_buttons={}
 
+  -- keep track of active notes by position
+  m.active_notes={}
+
   -- grid refreshing
   m.grid_refresh=metro.init()
   m.grid_refresh.time=0.1
@@ -77,40 +80,38 @@ function GGrid:grid_key(x,y,z)
 end
 
 function GGrid:key_press(row,col,on)
+  local pos_key = row..","..col
+  local note = self.notes[row][col]+key
+
   if on then
-    self.pressed_buttons[row..","..col]=clock.get_beats()
+    -- Button pressed - start note
+    self.pressed_buttons[pos_key]=clock.get_beats()
+    self.active_notes[pos_key]=note
+    print("note on:", row, col, note)
+
+    -- Play the note
+    engine.bbsine(12, note)
+
+    -- Update crow for most recent note
+    local volts = (note-24)/12
+    crow.output[1].volts=volts
+    crow.output[2](true)
   else
-    self.pressed_buttons[row..","..col]=nil
-  end
-  if next(self.pressed_buttons)==0 then 
-    -- release
-    do return end 
-  end
-  local last_note = {0,0}
-  local num=0
-  for k,v in pairs(self.pressed_buttons) do 
-    num = num +1
-    if v > last_note[2] then 
-        last_note = {k,v}
+    -- Button released - stop note
+    self.pressed_buttons[pos_key]=nil
+
+    if self.active_notes[pos_key] then
+      print("note off:", row, col, self.active_notes[pos_key])
+      -- Turn off this specific note
+      engine.bboff_note(self.active_notes[pos_key])
+      self.active_notes[pos_key]=nil
     end
-  end
-  if last_note[2]==0 then
-    print("release")
-    crow.output[2](false)
-    engine.bboff()
-    do return end
-  end
-  local row,col=last_note[1]:match("(%d+),(%d+)")
-  row=tonumber(row)
-  col=tonumber(col)
-  print(row,col)
-  local volts = (self.notes[row][col]+key-24)/12
-  print(volts, num)
-  crow.output[1].volts=volts
-  if num==1 then
-      crow.output[2](true)
-      -- emit note to engine
-      engine.bbsine(12, self.notes[row][col]+key)
+
+    -- If no notes are playing, release crow gate
+    if next(self.pressed_buttons)==nil then
+      crow.output[2](false)
+      engine.bboff()
+    end
   end
 end
 
